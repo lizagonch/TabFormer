@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from dataset.datacollator import TransDataCollatorForLanguageModeling
 
-from dataset.card import TransactionDataset
+from dataset.alfa_card import AlfaTransactionDataset
 from models.modules import TabFormerGPT2
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ def gpt_eval(args):
     # Initialize and load components
     vocab_dir = os.path.join(args.output_dir, user_model)
 
-    dataset = TransactionDataset(root=args.data_dir,
+    dataset = AlfaTransactionDataset(root=args.data_dir,
                                  fname=args.data_fname,
                                  fextension=args.data_extension,
                                  vocab_dir=args.output_dir,

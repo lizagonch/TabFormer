@@ -1,8 +1,8 @@
 #!/bin/bash
 
-user_id=808
+user_id=52
 hsz=1020
-checkpoint=1000
+checkpoint=4
 bsz=64
 stride=3
 decode="softmax"
@@ -11,12 +11,13 @@ num_seed_trans=2
 
 cd ..
 
-data_dir="./data/credit_card/"
-output_dir="./checkpoints/credit_card/gpt2-userid_${user_id}-nbins_10-hsz_${user_id}"
+data_dir="./data/alfa/"
+output_dir="./output_bert/"
 
 python gpt_eval.py \
   --output_dir "${output_dir}" \
   --data_dir "${data_dir}" \
+  --data_fname "small_transaction"\
   --user_id "${user_id}" \
   --checkpoint "${checkpoint}" \
   --hidden_size "${hsz}" \
@@ -25,5 +26,5 @@ python gpt_eval.py \
   --decoding "${decode}" \
   --temperature "${temp}" \
   --num_seed_trans "${num_seed_trans}" \
-  --data_extension "userid-${user_id}" \
+  --data_extension "" \
   --store_csv

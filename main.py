@@ -9,10 +9,11 @@ from args import define_main_parser
 from transformers import DataCollatorForLanguageModeling, Trainer, TrainingArguments
 
 from dataset.prsa import PRSADataset
-from dataset.card import TransactionDataset
+from dataset.alfa_card import AlfaTransactionDataset
 from models.modules import TabFormerBertLM, TabFormerGPT2
 from misc.utils import random_split_dataset
 from dataset.datacollator import TransDataCollatorForLanguageModeling
+from datasets import load_metric
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ def main(args):
         torch.cuda.manual_seed_all(seed)  # torch.cuda
 
     if args.data_type == 'card':
-        dataset = TransactionDataset(root=args.data_root,
+        dataset = AlfaTransactionDataset(root=args.data_root,
                                      fname=args.data_fname,
                                      fextension=args.data_extension,
                                      vocab_dir=args.output_dir,
@@ -77,6 +78,41 @@ def main(args):
                                                                                testN / totalN))
 
     train_dataset, eval_dataset, test_dataset = random_split_dataset(dataset, lengths)
+    print(args.field_ce, args.flatten, dataset.ncols, args.field_hs)
+    if args.lm_type == "bert":
+        tab_net = TabFormerBertLM(custom_special_tokens,
+                               vocab=vocab,
+                               field_ce=args.field_ce,
+                               flatten=args.flatten,
+                               ncols=dataset.ncols,
+                               field_hidden_size=args.field_hs
+                               )
+    else:
+        tab_net = TabFormerGPT2(custom_special_tokens,
+                             vocab=vocab,
+                             field_ce=args.field_ce,
+                             flatten=args.flatten,
+                             )
+    vocab = dataset.vocab
+    custom_special_tokens = vocab.get_special_tokens()
+
+    # split dataset into train, val, test [0.6. 0.2, 0.2]
+    totalN = len(dataset)
+    trainN = int(0.6 * totalN)
+
+    valtestN = totalN - trainN
+    valN = int(valtestN * 0.5)
+    testN = valtestN - valN
+
+    assert totalN == trainN + valN + testN
+
+    lengths = [trainN, valN, testN]
+
+    log.info(f"# lengths: train [{trainN}]  valid [{valN}]  test [{testN}]")
+    log.info("# lengths: train [{:.2f}]  valid [{:.2f}]  test [{:.2f}]".format(trainN / totalN, valN / totalN,
+                                                                               testN / totalN))
+
+    train_dataset, eval_dataset, test_dataset = random_split_dataset(dataset, lengths)
 
     if args.lm_type == "bert":
         tab_net = TabFormerBertLM(custom_special_tokens,
@@ -92,6 +128,7 @@ def main(args):
                              field_ce=args.field_ce,
                              flatten=args.flatten,
                              )
+    print(vocab)
 
     log.info(f"model initiated: {tab_net.model.__class__}")
 
@@ -111,6 +148,8 @@ def main(args):
         logging_dir=args.log_dir,  # directory for storing logs
         save_steps=args.save_steps,
         do_train=args.do_train,
+        # do_eval=args.do_eval,
+        # evaluation_strategy="epoch",
         prediction_loss_only=True,
         overwrite_output_dir=True,
         # eval_steps=10000
@@ -146,5 +185,6 @@ if __name__ == "__main__":
 
     if not opts.mlm and opts.lm_type == "bert":
         raise Exception("Error: Bert needs '--mlm' option. Please re-run with this flag included.")
-
+        
+    print(opts)
     main(opts)
