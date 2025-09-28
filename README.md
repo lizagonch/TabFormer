@@ -33,6 +33,37 @@ You would need git-lfs to access the data. If you are facing issue related to LF
 
 ---
 
+### Dataset materialisation helpers
+
+The `scripts/` directory contains lightweight wrappers around the dataset
+classes so you can prepare cached artefacts before launching training runs
+or downstream OCR benchmarks.
+
+To create the preprocessing artefacts and store a summary for the credit card
+dataset run:
+
+```
+python scripts/create_dataset.py --data-type card --output-dir checkpoints/card
+```
+
+For the PRSA data, specify the corresponding data root:
+
+```
+python scripts/create_dataset.py --data-type prsa --data-root ./data/prsa/ --output-dir checkpoints/prsa
+```
+
+After the creation step you can validate the dataset and compare it against
+the generated summary file using:
+
+```
+python scripts/check_dataset.py --data-type card --output-dir checkpoints/card
+```
+
+Both commands accept additional arguments (stride, sequence length, MLM mode,
+etc.) that are forwarded to the underlying dataset classes.
+
+---
+
 ### PRSA Dataset
 For PRSA dataset, one have to download the PRSA dataset from [Kaggle](https://www.kaggle.com/sid321axn/beijing-multisite-airquality-data-set) and place them in [./data/card](/data/card/) directory.
 
